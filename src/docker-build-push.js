@@ -44,7 +44,7 @@ const createFullImageName = () => {
   return imageFullName;
 };
 
-const run = () => {
+const run = async () => {
   try {
     processInputs();
 
@@ -55,7 +55,7 @@ const run = () => {
     const firstTag = tagsCopy.shift();
 
     docker.login();
-    docker.build(imageFullName, firstTag, buildArgs);
+    await docker.build(imageFullName, firstTag, buildArgs);
     docker.push(imageFullName, firstTag);
 
     core.info(`Docker image ${imageFullName}:${firstTag} pushed to registry`);

@@ -50,7 +50,7 @@ const createBuildCommand = (dockerfile, imageName, tag, buildDir, buildArgs) => 
   return `${buildCommandPrefix} ${buildDir}`;
 };
 
-const build = (imageName, tag, buildArgs) => {
+const build = async (imageName, tag, buildArgs) => {
   const dockerfile = core.getInput('dockerfile');
   const buildDir = core.getInput('directory') || '.';
 
@@ -59,7 +59,23 @@ const build = (imageName, tag, buildArgs) => {
   }
 
   core.info(`Building Docker image: ${imageName}:${tag}`);
-  cp.execSync(createBuildCommand(dockerfile, imageName, tag, buildDir, buildArgs), cpOptions);
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  const child = cp.exec(createBuildCommand(dockerfile, imageName, tag, buildDir, buildArgs), cpOptions);
+  child.stdout.on('data', e => {
+    core.info(e);
+  });
+  child.on('error', e => {
+    reject(e);
+  });
+  child.on('close', () => {
+    resolve();
+  });
+  await promise;
 };
 
 const tag = (imageName, existingTag, newTag) =>
